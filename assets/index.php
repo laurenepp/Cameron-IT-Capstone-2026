@@ -8,5 +8,6 @@
     <title>Riverside Family Clinic</title>
 </head>
 <body>
+<h1>Welcome to Riverside Family Clinic</h1>
 </body>
 </html>
