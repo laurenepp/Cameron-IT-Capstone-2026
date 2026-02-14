@@ -54,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Browser tab title -->
     <title>Staff Portal - Sign In</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+
     <!-- Link external stylesheet -->
     <!-- ../ moves up one folder from /public to /assets -->
     <link rel="stylesheet" href="css/index.css">
@@ -63,6 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Main page wrapper -->
     <main class="page">
+
+    <!-- Clinic logo -->
+    <div class="logo-container">
+    <img src="assets/images/Final Family Desert 1.png" alt="Riverside Family Clinic Logo" class="logo">
+    </div>
+
 
         <!-- Page heading -->
         <h1 class="page-title">
