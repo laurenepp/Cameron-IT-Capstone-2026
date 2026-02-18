@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate fields are not empty
     if ($username === '' || $password === '') {
         // Set error message if user left fields blank
-        $error = "Please enter your username and password.";
+        $error = "Invalid username or password.";
     } else {
         // TEMPORARY MESSAGE — no database yet
         // Later this block will check credentials against MySQL
