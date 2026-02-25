@@ -47,9 +47,9 @@ Options -Indexes
 
 # --- Block PHP Execution in the Images Folder ---
 # Prevents someone from uploading a malicious .php file disguised as an image
-#<Directory "images">
-#   php_flag engine off
-#</Directory>
+<Directory "images">
+    php_flag engine off
+</Directory>
 
 # --- Error Pages ---
 # Don't show Apache's default error pages (they reveal server info)

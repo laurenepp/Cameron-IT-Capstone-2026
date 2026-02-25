@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Clinic logo -->
     <div class="logo-container">
-    <img src="assets/images/Final Family Desert 1.png" alt="Riverside Family Clinic Logo" class="logo">
+    <img src="images/Final Family Desert 1.png" alt="Riverside Family Clinic Logo" class="logo">
     </div>
 
 
