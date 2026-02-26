@@ -16,6 +16,21 @@ session_start();
 // Variable to hold any error message
 $error = "";
 
+/* This replaces database authentication for now */
+$users = [
+    "admin" => [
+        "password" => "Admin123!",
+        "role" => "admin"
+    ],
+    "doctor" => [
+        "password" => "Doctor123!",
+        "role" => "doctor"
+    ],
+    "nurse" => [
+        "password" => "Nurse123!",
+        "role" => "nurse"
+    ]
+];
 // Check if the form was submitted
 // $_SERVER['REQUEST_METHOD'] tells us how the page was accessed
 // POST means user clicked Sign In
