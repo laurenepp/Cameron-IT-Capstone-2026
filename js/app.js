@@ -58,7 +58,8 @@ async function start() {
     }
 
     // Build menu + default view for this role
-    renderDashboardShell(normalizeRole(user.role));
+    buildMenu(user.role);
+    loadAdmin();
   } catch (err) {
     showLogin();
   }
@@ -111,14 +112,19 @@ function renderDashboardShell(role) {
 
   const nav = document.getElementById("dash_nav");
 
-  if (role === "admin") {
+    if (role === "admin") {
     nav.innerHTML = `
-      <button class="navbtn" onclick="admin_home()">Admin Home</button>
-      <button class="navbtn" onclick="admin_users()">Manage Users</button>
-      <button class="navbtn" onclick="admin_reports()">Reporting</button>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <div class="admin-side-nav-group">
+        <button class="navbtn" onclick="admin_home()">Admin Home</button>
+        <button class="navbtn" onclick="admin_users()">Manage Users</button>
+        <button class="navbtn" onclick="admin_reports()">Reporting</button>
+      </div>
+
+      <div class="admin-side-nav-footer">
+        <button class="navbtn" onclick="doLogout()">Logout</button>
+      </div>
     `;
-    admin_home();
+    admin_users();
     return;
   }
 
@@ -184,25 +190,20 @@ async function doLogout() {
 }
 
 // -----------------------------
-// Admin Views (placeholders)
+// Admin Views
 // -----------------------------
 function admin_home() {
-  setView(`
-    <h2>Admin Dashboard</h2>
-    <p>Welcome! Use the buttons on the left to manage users and view reports.</p>
-  `);
+  loadAdmin();
 }
+
 function admin_users() {
-  setView(`
-    <h2>Manage Users</h2>
-    <p>TODO: List/Create/Disable users (Admin module).</p>
-  `);
+  loadAdmin();
+  admin_showUsers();
 }
+
 function admin_reports() {
-  setView(`
-    <h2>Reporting</h2>
-    <p>TODO: Reporting tiles + exports.</p>
-  `);
+  loadAdmin();
+  admin_showReports();
 }
 
 // -----------------------------

@@ -4,23 +4,14 @@ function loadAdmin(){
   const content = document.getElementById("content");
 
   content.innerHTML = `
-    <div class="card">
-      <h2>Administrator — System Oversight</h2>
-      <p>Users, system status, reporting</p>
-
-      <div id="admin_tiles"></div>
-
-      <div class="section">
-        <div class="section-title">
-          <h3>Admin Tools</h3>
-          <div class="tools">
-            <button class="primary" onclick="admin_showUsers()">Manage Users</button>
-            <button class="secondary" onclick="admin_showReports()">Reporting</button>
-          </div>
-        </div>
+    <div class="admin-page-shell">
+      <div class="admin-page-header">
+        <h2>Administrator - System Oversight</h2>
+        <p>Users, system status, reporting</p>
       </div>
 
-      <div id="admin_panel"></div>
+      <div id="admin_tiles" class="admin-tiles-wrap"></div>
+      <div id="admin_panel" class="admin-panel-wrap"></div>
     </div>
   `;
 
@@ -28,22 +19,12 @@ function loadAdmin(){
   admin_showUsers();
 }
 
-async function admin_loadTiles(){
+function admin_loadTiles(){
   const wrap = document.getElementById("admin_tiles");
-  wrap.innerHTML = `<div style="margin-top:12px; color: var(--muted); font-weight:700;">Loading dashboard…</div>`;
+  if (!wrap) return;
 
-  const d = await apiSafe("api/admin/dashboard_summary.php");
-
-  wrap.innerHTML = `
-    <div class="tiles">
-      ${admin_tile("Users (Total)", d.totalUsers, `As of ${d.today}`, "U", "teal")}
-      ${admin_tile("Users (Active)", d.activeUsers, `Not disabled`, "A", "sage")}
-      ${admin_tile("Appointments Today", d.appointmentsToday, `Scheduled today`, "C", "gold")}
-      ${admin_tile("Checked-In Today", d.checkedInToday, `Front desk check-ins`, "✓", "dark")}
-      ${admin_tile("Completed Today", d.completedToday, `Visits completed`, "✔", "teal")}
-      ${admin_tile("Cancelled Today", d.cancelledToday, `Cancelled visits`, "×", "gold")}
-    </div>
-  `;
+  // UI-only for now
+  wrap.innerHTML = "";
 }
 
 function admin_tile(label, value, sub, iconText, tone){
@@ -67,34 +48,172 @@ function admin_panel(html){
    USERS
 ------------------------- */
 
-async function admin_showUsers(){
+function admin_showUsers(){
   admin_panel(`
-    <div class="section-title">
-      <h3>Manage Users</h3>
-      <div class="tools">
-        <button class="primary" onclick="admin_showCreateUser()">+ Create User</button>
-        <button class="ghost" onclick="admin_loadUsers()">Refresh</button>
+    <div class="admin-users-shell">
+      <div class="admin-users-toolbar card">
+        <div class="admin-search-wrap">
+          <span class="admin-search-icon">&#128269;</span>
+          <input
+            id="adminUserSearch"
+            class="admin-search-input"
+            type="text"
+            placeholder="Search users by name, username, email, or role..."
+            oninput="admin_filterUsers()"
+          >
+        </div>
+
+        <button type="button" id="adminAddUserBtn" class="admin-add-user-btn">
+          <span class="plus">+</span>
+          <span>Add User</span>
+        </button>
+
+        <div class="admin-users-stats" id="adminUsersStats">
+          Total Users: 0 | Active: 0 | Locked: 0
+        </div>
+      </div>
+
+      <div id="admin_create_wrap" style="display:none;"></div>
+
+      <div class="card admin-users-table-card">
+        <div id="admin_users"></div>
       </div>
     </div>
-    <div id="admin_users"></div>
   `);
-  await admin_loadUsers();
+
+  const addBtn = document.getElementById("adminAddUserBtn");
+  if (addBtn) {
+    addBtn.addEventListener("click", function(){
+      admin_showCreateUser();
+    });
+  }
+
+  admin_loadUsers();
 }
 
-async function admin_loadUsers(){
-  const data = await apiSafe("api/admin/users_list.php");
+function admin_loadUsers(){
+  // UI-only mock data for now
+  window.adminUsersData = [
+    {
+      User_ID: 1,
+      First_Name: "Reyna",
+      Last_Name: "Administrator",
+      Email: "reyna@clinic.com",
+      Role_Name: "Administrator",
+      Is_Disabled: 0,
+      Last_Login_At: "-"
+    },
+    {
+      User_ID: 2,
+      First_Name: "Fernando",
+      Last_Name: "Doctor",
+      Email: "fernando@clinic.com",
+      Role_Name: "Doctor",
+      Is_Disabled: 0,
+      Last_Login_At: "-"
+    },
+    {
+      User_ID: 3,
+      First_Name: "Logan",
+      Last_Name: "Nurse",
+      Email: "logan@clinic.com",
+      Role_Name: "Nurse",
+      Is_Disabled: 0,
+      Last_Login_At: "-"
+    },
+    {
+      User_ID: 4,
+      First_Name: "Michael",
+      Last_Name: "Phillips",
+      Email: "michael@clinic.com",
+      Role_Name: "Administrator",
+      Is_Disabled: 0,
+      Last_Login_At: "-"
+    },
+    {
+      User_ID: 5,
+      First_Name: "Andrea",
+      Last_Name: "Receptionist",
+      Email: "andrea@clinic.com",
+      Role_Name: "Receptionist",
+      Is_Disabled: 0,
+      Last_Login_At: "-"
+    }
+  ];
 
-  const rows = data.users.map(u => `
+  const totalUsers = window.adminUsersData.length;
+  const activeUsers = window.adminUsersData.filter(u => !Number(u.Is_Disabled)).length;
+  const lockedUsers = window.adminUsersData.filter(u => Number(u.Is_Disabled)).length;
+
+  const stats = document.getElementById("adminUsersStats");
+  if (stats) {
+    stats.innerHTML = `Total Users: ${totalUsers} | Active: ${activeUsers} | Locked: ${lockedUsers}`;
+  }
+
+  admin_renderUsersTable(window.adminUsersData);
+}
+
+function admin_filterUsers(){
+  const searchEl = document.getElementById("adminUserSearch");
+  const term = (searchEl?.value || "").trim().toLowerCase();
+
+  if (!window.adminUsersData) return;
+
+  if (!term) {
+    admin_renderUsersTable(window.adminUsersData);
+    return;
+  }
+
+  const filtered = window.adminUsersData.filter(u => {
+    const fullName = `${u.First_Name || ""} ${u.Last_Name || ""}`.toLowerCase();
+    const reverseName = `${u.Last_Name || ""}, ${u.First_Name || ""}`.toLowerCase();
+    const email = (u.Email || "").toLowerCase();
+    const role = (u.Role_Name || "").toLowerCase();
+    const id = String(u.User_ID || "").toLowerCase();
+
+    return (
+      fullName.includes(term) ||
+      reverseName.includes(term) ||
+      email.includes(term) ||
+      role.includes(term) ||
+      id.includes(term)
+    );
+  });
+
+  admin_renderUsersTable(filtered);
+}
+
+function admin_renderUsersTable(users){
+  const rows = users.map(u => `
     <tr>
-      <td>${u.User_ID}</td>
-      <td>${u.Last_Name}, ${u.First_Name}</td>
-      <td>${u.Role_Name}</td>
-      <td>${u.Email}</td>
-      <td>${u.Phone_Number}</td>
-      <td>${u.Is_Disabled ? `<span class="badge gold">DISABLED</span>` : `<span class="badge teal">ACTIVE</span>`}</td>
       <td>
-        <button class="small" onclick='admin_editUser(${JSON.stringify(u)})'>Edit</button>
-        <button class="small ${u.Is_Disabled ? "secondary" : "gold"}"
+        <div class="admin-user-cell">
+          <div class="admin-user-avatar">
+            ${((u.First_Name || "").charAt(0) + (u.Last_Name || "").charAt(0)).toUpperCase() || "U"}
+          </div>
+          <div class="admin-user-meta">
+            <div class="admin-user-name">${u.First_Name || ""} ${u.Last_Name || ""}</div>
+            <div class="admin-user-sub">${u.Email || ""}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <span class="admin-role-pill role-${(u.Role_Name || "").toLowerCase()}">
+          ${(u.Role_Name || "").toLowerCase()}
+        </span>
+      </td>
+      <td>
+        ${
+          Number(u.Is_Disabled)
+            ? `<span class="admin-status-pill locked">locked</span>`
+            : `<span class="admin-status-pill active">active</span>`
+        }
+      </td>
+      <td>${u.Last_Login_At || "-"}</td>
+      <td class="admin-actions-cell">
+        <button class="small ghost" onclick='admin_editUser(${JSON.stringify(u)})'>Edit</button>
+        <button
+          class="small ${u.Is_Disabled ? "secondary" : "gold"}"
           onclick="admin_toggleDisable(${u.User_ID}, ${u.Is_Disabled ? 0 : 1})">
           ${u.Is_Disabled ? "Enable" : "Disable"}
         </button>
@@ -103,89 +222,92 @@ async function admin_loadUsers(){
   `).join("");
 
   document.getElementById("admin_users").innerHTML = `
-    <table>
+    <table class="admin-users-table">
       <thead>
         <tr>
-          <th>ID</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th>
+          <th>USER</th>
+          <th>ROLE</th>
+          <th>STATUS</th>
+          <th>LAST LOGIN</th>
+          <th>ACTIONS</th>
         </tr>
       </thead>
-      <tbody>${rows || `<tr><td colspan="7">No users</td></tr>`}</tbody>
+      <tbody>
+        ${rows || `<tr><td colspan="5">No users found.</td></tr>`}
+      </tbody>
     </table>
   `;
 }
 
 function admin_showCreateUser(){
-  admin_panel(`
-    <div class="section-title">
-      <h3>Create User</h3>
-      <div class="tools">
-        <button class="ghost" onclick="admin_showUsers()">Back</button>
-      </div>
-    </div>
+  const wrap = document.getElementById("admin_create_wrap");
+  if (!wrap) return;
 
-    <div class="form-grid">
-      <div class="field">
-        <label>First Name</label>
-        <input id="cu_first" placeholder="First Name">
-      </div>
-      <div class="field">
-        <label>Last Name</label>
-        <input id="cu_last" placeholder="Last Name">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input id="cu_email" placeholder="Email">
-      </div>
-      <div class="field">
-        <label>Phone</label>
-        <input id="cu_phone" placeholder="Phone">
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select id="cu_role">
-          <option>Administrator</option>
-          <option>Doctor</option>
-          <option>Nurse</option>
-          <option>Receptionist</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Username</label>
-        <input id="cu_username" placeholder="Username">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input id="cu_password" type="password" placeholder="Password">
-        <div class="hint">This is hashed server-side.</div>
-      </div>
-    </div>
+  wrap.style.display = "block";
+  wrap.innerHTML = `
+    <div class="card admin-create-user-card">
+      <h3>Add New User</h3>
+      <p style="margin-top:8px;">Button click is working.</p>
 
-    <div class="row" style="margin-top:12px;">
-      <button class="primary" onclick="admin_createUser()">Create User</button>
-    </div>
+      <div class="form-grid admin-create-grid">
+        <div class="field">
+          <label>Full Name</label>
+          <input id="cu_fullname" placeholder="Enter full name">
+        </div>
 
-    <div id="admin_msg" style="margin-top:10px;"></div>
-  `);
+        <div class="field">
+          <label>Username</label>
+          <input id="cu_username" placeholder="Enter username">
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input id="cu_email" placeholder="user@riverside.clinic">
+        </div>
+
+        <div class="field">
+          <label>Role</label>
+          <select id="cu_role">
+            <option>Administrator</option>
+            <option>Doctor</option>
+            <option>Nurse</option>
+            <option>Receptionist</option>
+          </select>
+        </div>
+
+        <div class="field admin-create-span-2">
+          <label>Initial Password</label>
+          <input id="cu_password" type="password" placeholder="Enter initial password">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button class="admin-create-submit" type="button" onclick="admin_mockCreateUser()">Create User</button>
+        <button class="admin-create-cancel" type="button" onclick="admin_cancelCreateUser()">Cancel</button>
+      </div>
+
+      <div id="admin_msg" style="margin-top:10px;"></div>
+    </div>
+  `;
+}
+
+function admin_cancelCreateUser(){
+  const wrap = document.getElementById("admin_create_wrap");
+  if (!wrap) return;
+
+  wrap.style.display = "none";
+  wrap.innerHTML = "";
+}
+
+function admin_mockCreateUser(){
+  const msg = document.getElementById("admin_msg");
+  if (!msg) return;
+
+  msg.innerHTML = `<span class="badge gold">Form is working. Database insert is disabled until schema fixes are complete.</span>`;
 }
 
 async function admin_createUser(){
-  const firstName = document.getElementById("cu_first").value.trim();
-  const lastName  = document.getElementById("cu_last").value.trim();
-  const email     = document.getElementById("cu_email").value.trim();
-  const phone     = document.getElementById("cu_phone").value.trim();
-  const roleName  = document.getElementById("cu_role").value;
-  const username  = document.getElementById("cu_username").value.trim();
-  const password  = document.getElementById("cu_password").value;
-
-  const res = await apiSafe("api/admin/users_create.php","POST",{
-    firstName,lastName,email,phone,roleName,username,password
-  });
-
-  toast("User created", `User ID ${res.userId}`, "ok");
-  document.getElementById("admin_msg").innerHTML = `<span class="badge teal">Created User ID: ${res.userId}</span>`;
-
-  await admin_loadUsers();
-  await admin_loadTiles();
+  // intentionally disabled until backend/database is ready
 }
 
 function admin_editUser(u){
@@ -200,33 +322,33 @@ function admin_editUser(u){
     <div class="form-grid">
       <div class="field">
         <label>First Name</label>
-        <input id="eu_first" value="${u.First_Name}">
+        <input id="eu_first" value="${u.First_Name || ""}">
       </div>
       <div class="field">
         <label>Last Name</label>
-        <input id="eu_last" value="${u.Last_Name}">
+        <input id="eu_last" value="${u.Last_Name || ""}">
       </div>
       <div class="field">
         <label>Email</label>
-        <input id="eu_email" value="${u.Email}">
+        <input id="eu_email" value="${u.Email || ""}">
       </div>
       <div class="field">
         <label>Phone</label>
-        <input id="eu_phone" value="${u.Phone_Number}">
+        <input id="eu_phone" value="">
       </div>
       <div class="field">
         <label>Role</label>
         <select id="eu_role">
           ${["Administrator","Doctor","Nurse","Receptionist"].map(r =>
-            `<option ${r===u.Role_Name?"selected":""}>${r}</option>`
+            `<option ${r === u.Role_Name ? "selected" : ""}>${r}</option>`
           ).join("")}
         </select>
       </div>
     </div>
 
     <div class="row" style="margin-top:12px;">
-      <button class="primary" onclick="admin_updateUser(${u.User_ID})">Save</button>
-      <button class="${u.Is_Disabled ? "secondary" : "gold"}"
+      <button class="primary" type="button" onclick="toast('Mock Save', 'Edit form is UI-only right now.', 'ok')">Save</button>
+      <button class="${u.Is_Disabled ? "secondary" : "gold"}" type="button"
         onclick="admin_toggleDisable(${u.User_ID}, ${u.Is_Disabled ? 0 : 1})">
         ${u.Is_Disabled ? "Enable" : "Disable"}
       </button>
@@ -237,28 +359,16 @@ function admin_editUser(u){
 }
 
 async function admin_updateUser(userId){
-  const firstName = document.getElementById("eu_first").value.trim();
-  const lastName  = document.getElementById("eu_last").value.trim();
-  const email     = document.getElementById("eu_email").value.trim();
-  const phone     = document.getElementById("eu_phone").value.trim();
-  const roleName  = document.getElementById("eu_role").value;
-
-  await apiSafe("api/admin/users_update.php","POST",{
-    userId, firstName, lastName, email, phone, roleName
-  });
-
-  toast("Saved", "User updated", "ok");
-  document.getElementById("admin_msg").innerHTML = `<span class="badge teal">Saved</span>`;
-
-  await admin_loadUsers();
-  await admin_loadTiles();
+  // intentionally disabled for now
 }
 
-async function admin_toggleDisable(userId, isDisabled){
-  await apiSafe("api/admin/users_disable.php","POST",{userId, isDisabled});
-  toast("Updated", isDisabled ? "User disabled" : "User enabled", "ok");
-  await admin_loadUsers();
-  await admin_loadTiles();
+function admin_toggleDisable(userId, isDisabled){
+  const user = window.adminUsersData.find(u => Number(u.User_ID) === Number(userId));
+  if (!user) return;
+
+  user.Is_Disabled = isDisabled ? 1 : 0;
+  admin_loadUsers();
+  toast("Mock Update", isDisabled ? "User disabled (UI only)" : "User enabled (UI only)", "ok");
 }
 
 /* -------------------------
@@ -266,74 +376,20 @@ async function admin_toggleDisable(userId, isDisabled){
 ------------------------- */
 
 function admin_showReports(){
-  const today = new Date().toISOString().slice(0,10);
   admin_panel(`
     <div class="section-title">
-      <h3>Reporting — Appointments</h3>
+      <h3>Reporting - Appointments</h3>
       <div class="tools">
         <button class="ghost" onclick="admin_showUsers()">Back</button>
       </div>
     </div>
 
-    <div class="row compact">
-      <div class="field">
-        <label>From</label>
-        <input id="r_from" type="date" value="${today}">
-      </div>
-      <div class="field">
-        <label>To</label>
-        <input id="r_to" type="date" value="${today}">
-      </div>
-      <div style="align-self:end;">
-        <button class="primary" onclick="admin_loadReport()">Run Report</button>
-      </div>
+    <div class="card">
+      <p>Reporting is temporarily UI-only while backend/database work is in progress.</p>
     </div>
-
-    <div id="admin_report" style="margin-top:12px;"></div>
   `);
 }
 
 async function admin_loadReport(){
-  const from = document.getElementById("r_from").value;
-  const to   = document.getElementById("r_to").value;
-
-  const data = await apiSafe(`api/admin/reports_appointments.php?from=${from}&to=${to}`);
-
-  const totals = (data.totalsByStatus || []).map(t =>
-    `<span class="${badgeClass(t.Status)}" style="margin-right:8px;">${t.Status}: ${t.Count}</span>`
-  ).join("");
-
-  const rows = (data.appointments || []).map(a => `
-    <tr>
-      <td>${a.Appointment_ID}</td>
-      <td>${fmtDT(a.Scheduled_Start)}</td>
-      <td>${fmtDT(a.Scheduled_End)}</td>
-      <td><span class="${badgeClass(a.Status)}">${a.Status}</span></td>
-      <td>${a.Patient_Last}, ${a.Patient_First}</td>
-      <td>Dr. ${a.Provider_Last}</td>
-    </tr>
-  `).join("");
-
-  document.getElementById("admin_report").innerHTML = `
-    <div class="section">
-      <div class="section-title">
-        <h3>Totals</h3>
-      </div>
-      <div>${totals || `<span class="badge">No data</span>`}</div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">
-        <h3>Appointments</h3>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th><th>Start</th><th>End</th><th>Status</th><th>Patient</th><th>Provider</th>
-          </tr>
-        </thead>
-        <tbody>${rows || `<tr><td colspan="6">No appointments</td></tr>`}</tbody>
-      </table>
-    </div>
-  `;
+  // intentionally disabled for now
 }
