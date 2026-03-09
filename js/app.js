@@ -98,11 +98,7 @@ function showLogin() {
       <div class="login-right">
         <div class="login-card">
           <div class="login-card-inner">
-<<<<<<< Updated upstream
             <p class="login-eyebrow">Riverside Family Clinic</p>
-=======
-            <p class="login-eyebrow">Riverside Clinic</p>
->>>>>>> Stashed changes
             <h1>Welcome Back</h1>
             <p class="login-subtext">Sign in to access the clinic portal.</p>
 
