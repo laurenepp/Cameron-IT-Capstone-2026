@@ -51,7 +51,10 @@ async function start() {
   try {
     const user = await api("api/auth/me.php");
 
-    // Show welcome text
+    // Bring app back from login layout
+    document.querySelector(".app")?.classList.remove("logged-out");
+
+    // Welcome text
     const welcome = document.getElementById("welcome");
     if (welcome) {
       welcome.innerText = `${user.name} (${user.role})`;

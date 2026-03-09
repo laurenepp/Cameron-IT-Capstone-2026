@@ -1,38 +1,74 @@
-function buildMenu(role){
+// ===============================
+// Sidebar Menu Builder
+// ===============================
+
+function buildMenu(role) {
+
   const menu = document.getElementById("menu");
+  if (!menu) return;
+
   menu.innerHTML = "";
 
-  if(role === "Administrator"){
+  role = (role || "").trim().toLowerCase();
+
+  // ===============================
+  // ADMIN MENU
+  // ===============================
+  if (role === "admin" || role === "administrator") {
+
     menu.innerHTML = `
-      <button onclick="admin_home()">Admin Home</button>
-      <button onclick="admin_users()">Manage Users</button>
-      <button onclick="admin_reports()">Reporting</button>
-      <button onclick="logout()">Logout</button>
+      <button class="nav-btn" onclick="admin_home()">Dashboard</button>
+      <button class="nav-btn" onclick="admin_users()">Manage Users</button>
+      <button class="nav-btn" onclick="admin_reports()">Reports</button>
+      <button class="nav-btn logout" onclick="doLogout()">Logout</button>
     `;
+
     return;
   }
 
-  if(role === "Doctor"){
+  // ===============================
+  // DOCTOR MENU
+  // ===============================
+  if (role === "doctor") {
+
     menu.innerHTML = `
-      <button onclick="loadDoctor()">My Schedule</button>
-      <button onclick="logout()">Logout</button>
+      <button class="nav-btn" onclick="doc_home()">Dashboard</button>
+      <button class="nav-btn" onclick="doc_schedule()">My Schedule</button>
+      <button class="nav-btn" onclick="doc_patients()">Patients</button>
+      <button class="nav-btn logout" onclick="doLogout()">Logout</button>
     `;
+
     return;
   }
 
-  if(role === "Nurse"){
+  // ===============================
+  // NURSE MENU
+  // ===============================
+  if (role === "nurse") {
+
     menu.innerHTML = `
-      <button onclick="loadNurse()">Nurse Station</button>
-      <button onclick="logout()">Logout</button>
+      <button class="nav-btn" onclick="nurse_home()">Dashboard</button>
+      <button class="nav-btn" onclick="nurse_schedule()">Schedules</button>
+      <button class="nav-btn" onclick="nurse_intake()">Patient Intake</button>
+      <button class="nav-btn logout" onclick="doLogout()">Logout</button>
     `;
+
     return;
   }
 
-  if(role === "Receptionist"){
+  // ===============================
+  // RECEPTIONIST MENU
+  // ===============================
+  if (role === "receptionist") {
+
     menu.innerHTML = `
-      <button onclick="loadReception()">Front Desk</button>
-      <button onclick="logout()">Logout</button>
+      <button class="nav-btn" onclick="rx_home()">Dashboard</button>
+      <button class="nav-btn" onclick="rx_registerPatient()">Register Patient</button>
+      <button class="nav-btn" onclick="rx_appointments()">Appointments</button>
+      <button class="nav-btn logout" onclick="doLogout()">Logout</button>
     `;
+
     return;
   }
+
 }
