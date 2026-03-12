@@ -215,13 +215,13 @@ function setView(html) {
 // -----------------------------
 // Logout
 // -----------------------------
-async function doLogout() {
-  try {
-    await api("api/auth/logout.php", "POST", {});
-  } catch (e) {
-    // ignore
-  }
-  location.reload();
+function doLogout() {
+  const ok = confirm("Are you sure you want to log out?");
+  if (!ok) return;
+
+  api("api/auth/logout.php", "POST", {})
+    .catch(err => console.error("Logout failed:", err))
+    .finally(() => location.reload());
 }
 
 // -----------------------------
