@@ -290,27 +290,18 @@ function nurse_intake() {
 }
 
 // -----------------------------
-// Receptionist Views (placeholders)
+// Nurse Views
 // -----------------------------
-function rx_home() {
-  setView(`
-    <h2>Reception Dashboard</h2>
-    <p>TODO: Register patients + schedule appointments.</p>
-  `);
+function nurse_home() {
+  loadNurse();
 }
 
-function rx_registerPatient() {
-  setView(`
-    <h2>Register Patient</h2>
-    <p>TODO: Patient registration form.</p>
-  `);
+function nurse_schedule() {
+  loadNurse();
 }
 
-function rx_appointments() {
-  setView(`
-    <h2>Appointments</h2>
-    <p>TODO: Schedule/cancel/check-in appointments.</p>
-  `);
+function nurse_intake() {
+  loadNurse();
 }
 
 // Start the app
