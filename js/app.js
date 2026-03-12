@@ -158,7 +158,7 @@ function renderDashboardShell(role) {
       </div>
 
       <div class="admin-side-nav-footer">
-        <button class="navbtn" onclick="doLogout()">Logout</button>
+        <button class="navbtn" onclick="window.doLogout()">Logout</button>
       </div>
     `;
     admin_users();
@@ -170,7 +170,7 @@ function renderDashboardShell(role) {
       <button class="navbtn" onclick="doc_home()">Doctor Home</button>
       <button class="navbtn" onclick="doc_schedule()">My Schedule</button>
       <button class="navbtn" onclick="doc_notes()">Visit Notes</button>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <button class="navbtn" onclick="window.doLogout()">Logout</button>
     `;
     doc_home();
     return;
@@ -181,7 +181,7 @@ function renderDashboardShell(role) {
       <button class="navbtn" onclick="nurse_home()">Nurse Home</button>
       <button class="navbtn" onclick="nurse_schedule()">Schedules</button>
       <button class="navbtn" onclick="nurse_intake()">Intake</button>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <button class="navbtn" onclick="window.doLogout()">Logout</button>
     `;
     nurse_home();
     return;
@@ -192,7 +192,7 @@ function renderDashboardShell(role) {
       <button class="navbtn" onclick="rx_home()">Reception Home</button>
       <button class="navbtn" onclick="rx_registerPatient()">Register Patient</button>
       <button class="navbtn" onclick="rx_appointments()">Appointments</button>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <button class="navbtn" onclick="window.doLogout()">Logout</button>
     `;
     rx_home();
     return;
@@ -201,7 +201,7 @@ function renderDashboardShell(role) {
   nav.innerHTML = `
     <div style="padding:10px;">
       <b>Unknown role:</b> ${role}<br><br>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <button class="navbtn" onclick="window.doLogout()">Logout</button>
     </div>
   `;
   setView(`<h2>No dashboard for this role yet.</h2>`);
