@@ -1,3 +1,4 @@
+//comment//
 function logout() {
   showLogoutModal();
 }
