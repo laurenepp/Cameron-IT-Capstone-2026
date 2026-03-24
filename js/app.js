@@ -12,9 +12,8 @@ async function api(url, method = "GET", body = null) {
   }
 
   const res = await fetch(url, opts);
-
-  // Read response as text first, then parse JSON if possible
   const text = await res.text();
+
   let data = null;
   try {
     data = text ? JSON.parse(text) : null;
@@ -36,11 +35,13 @@ async function api(url, method = "GET", body = null) {
 // -----------------------------
 function normalizeRole(role) {
   role = (role || "").trim().toLowerCase();
+
   if (role === "administrator") return "admin";
   if (role === "admin") return "admin";
   if (role === "doctor") return "doctor";
   if (role === "nurse") return "nurse";
   if (role === "receptionist") return "receptionist";
+
   return role;
 }
 
@@ -51,32 +52,31 @@ async function start() {
   try {
     const user = await api("api/auth/me.php");
 
-    // Bring app back from login layout
     document.querySelector(".app")?.classList.remove("logged-out");
 
-    // Welcome text
     const welcome = document.getElementById("welcome");
     if (welcome) {
       welcome.innerText = `${user.name} (${user.role})`;
     }
 
-    // Normalize DB role value
     const role = normalizeRole(user.role);
-
-    // Load the correct dashboard for the role
     renderDashboardShell(role);
-
   } catch (err) {
     showLogin();
   }
 }
-
 
 // -----------------------------
 // Login UI
 // -----------------------------
 function showLogin() {
   document.querySelector(".app")?.classList.add("logged-out");
+
+  const menu = document.getElementById("menu");
+  if (menu) menu.innerHTML = "";
+
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.innerText = "";
 
   document.getElementById("content").innerHTML = `
     <div class="login-screen">
@@ -102,28 +102,56 @@ function showLogin() {
             <h1>Welcome Back</h1>
             <p class="login-subtext">Sign in to access the clinic portal.</p>
 
-            <div class="login-form">
+            <form id="loginForm" class="login-form">
               <label for="u">Username</label>
-              <input id="u" placeholder="Enter username">
+              <input
+                id="u"
+                name="username"
+                type="text"
+                placeholder="Enter username"
+                autocomplete="username"
+              >
 
               <label for="p">Password</label>
-              <input id="p" type="password" placeholder="Enter password">
+              <input
+                id="p"
+                name="password"
+                type="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+              >
 
-              <button class="login-btn" onclick="doLogin()">Login</button>
-            </div>
+              <button type="submit" class="login-btn">Login</button>
+            </form>
           </div>
         </div>
       </div>
     </div>
   `;
+
+  const loginForm = document.getElementById("loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      await doLogin();
+    });
+  }
 }
 
 // -----------------------------
 // Login action
 // -----------------------------
 async function doLogin() {
-  const username = document.getElementById("u").value.trim();
-  const password = document.getElementById("p").value;
+  const usernameInput = document.getElementById("u");
+  const passwordInput = document.getElementById("p");
+
+  const username = usernameInput ? usernameInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+
+  if (!username || !password) {
+    alert("Please enter your username and password.");
+    return;
+  }
 
   try {
     await api("api/auth/login.php", "POST", { username, password });
@@ -140,63 +168,47 @@ async function doLogin() {
 function renderDashboardShell(role) {
   document.getElementById("content").innerHTML = `
     <div class="dashboard">
-      <div class="dash-nav" id="dash_nav"></div>
       <div class="dash-main">
         <div id="dash_view"></div>
       </div>
     </div>
   `;
 
-  const nav = document.getElementById("dash_nav");
+  if (typeof buildMenu === "function") {
+    buildMenu(role);
+  }
 
-if (role === "admin") {
-  menu.innerHTML = `
-    <button class="nav-btn" onclick="admin_home()">Dashboard</button>
-    <button class="nav-btn" onclick="admin_users()">Manage Users</button>
-    <button class="nav-btn" onclick="admin_reports()">Reporting</button>
-    <button class="nav-btn" onclick="admin_settings()">Settings</button>
-    <button class="nav-btn logout" onclick="logout()">Logout</button>
-  `;
-  admin_home();
-  return;
-}
+  if (role === "admin") {
+    admin_home();
+    return;
+  }
 
   if (role === "doctor") {
-    nav.innerHTML = `
-      <button class="navbtn" onclick="doc_home()">Doctor Home</button>
-      <button class="navbtn" onclick="doc_schedule()">My Schedule</button>
-      <button class="navbtn" onclick="doc_notes()">Visit Notes</button>
-      <button class="navbtn" onclick="logout()">Logout</button>
-    `;
     doc_home();
     return;
   }
 
   if (role === "nurse") {
-    nav.innerHTML = `
-      <button class="navbtn" onclick="nurse_home()">Nurse Home</button>
-      <button class="navbtn" onclick="nurse_schedule()">Schedules</button>
-      <button class="navbtn" onclick="nurse_intake()">Intake</button>
-      <button class="navbtn" onclick="logout()">Logout</button>
-    `;
     nurse_home();
     return;
   }
-if (role === "receptionist") {
-  rx_home();
-  return;
-}
-  
 
-  nav.innerHTML = `
+  if (role === "receptionist") {
+    rx_home();
+    return;
+  }
+
+  setView(`
     <div style="padding:10px;">
       <b>Unknown role:</b> ${role}<br><br>
-      <button class="navbtn" onclick="doLogout()">Logout</button>
+      <button class="nav-btn logout" onclick="doLogout()">Logout</button>
     </div>
-  `;
-  setView(`<h2>No dashboard for this role yet.</h2>`);
+  `);
 }
 
+// -----------------------------
+// View helper
+// -----------------------------
 function setView(html) {
   const view = document.getElementById("dash_view");
   if (view) view.innerHTML = html;
@@ -211,6 +223,7 @@ async function doLogout() {
   } catch (e) {
     // ignore
   }
+
   location.reload();
 }
 
@@ -218,29 +231,33 @@ async function doLogout() {
 // Admin Views
 // -----------------------------
 function admin_home() {
-  loadAdmin();
-}
+  if (typeof loadAdmin === "function") {
+    loadAdmin();
+    return;
+  }
 
-function admin_users() {
-  admin_showUsers();
-}
-
-function admin_reports() {
-  admin_showReports();
-}
-
-function admin_settings() {
   setView(`
     <div class="page-header">
-      <h2>Settings</h2>
-      <p>Manage clinic and administrator settings.</p>
-    </div>
-
-    <div class="admin-panel-box">
-      <p>Settings page coming soon.</p>
+      <h2>Administrator Dashboard</h2>
+      <p>Admin dashboard is loading.</p>
     </div>
   `);
 }
+
+function admin_users() {
+  if (typeof admin_showUsers === "function") {
+    admin_showUsers();
+    return;
+  }
+
+  setView(`
+    <div class="page-header">
+      <h2>User Management</h2>
+      <p>User management page coming soon.</p>
+    </div>
+  `);
+}
+
 function admin_appointments() {
   setView(`
     <div class="page-header">
@@ -266,6 +283,11 @@ function admin_staff() {
 }
 
 function admin_reports() {
+  if (typeof admin_showReports === "function") {
+    admin_showReports();
+    return;
+  }
+
   setView(`
     <div class="page-header">
       <h2>Reports</h2>
@@ -276,6 +298,7 @@ function admin_reports() {
     </div>
   `);
 }
+
 function admin_settings() {
   setView(`
     <div class="page-header">
@@ -287,10 +310,16 @@ function admin_settings() {
     </div>
   `);
 }
+
 // -----------------------------
-// Doctor Views (placeholders)
+// Doctor Views
 // -----------------------------
 function doc_home() {
+  if (typeof loadDoctor === "function") {
+    loadDoctor();
+    return;
+  }
+
   setView(`
     <h2>Doctor Dashboard</h2>
     <p>TODO: Today’s schedule + quick visit note entry.</p>
@@ -311,27 +340,10 @@ function doc_notes() {
   `);
 }
 
-// -----------------------------
-// Nurse Views (placeholders)
-// -----------------------------
-function nurse_home() {
+function doc_patients() {
   setView(`
-    <h2>Nurse Dashboard</h2>
-    <p>TODO: Patient queue + intake shortcuts.</p>
-  `);
-}
-
-function nurse_schedule() {
-  setView(`
-    <h2>Schedules</h2>
-    <p>TODO: Nurse schedule view.</p>
-  `);
-}
-
-function nurse_intake() {
-  setView(`
-    <h2>Intake</h2>
-    <p>TODO: Initial visit documentation form.</p>
+    <h2>Patients</h2>
+    <p>TODO: Doctor patient list view.</p>
   `);
 }
 
@@ -339,31 +351,86 @@ function nurse_intake() {
 // Nurse Views
 // -----------------------------
 function nurse_home() {
-  loadNurse();
+  if (typeof loadNurse === "function") {
+    loadNurse();
+    return;
+  }
+
+  setView(`
+    <h2>Nurse Dashboard</h2>
+    <p>TODO: Patient queue + intake shortcuts.</p>
+  `);
 }
 
 function nurse_schedule() {
-  loadNurse();
+  if (typeof loadNurse === "function") {
+    loadNurse();
+    return;
+  }
+
+  setView(`
+    <h2>Schedules</h2>
+    <p>TODO: Nurse schedule view.</p>
+  `);
 }
 
 function nurse_intake() {
-  loadNurse();
+  if (typeof loadNurse === "function") {
+    loadNurse();
+    return;
+  }
+
+  setView(`
+    <h2>Intake</h2>
+    <p>TODO: Initial visit documentation form.</p>
+  `);
 }
 
-// ----------------------------- 
-// Receptionist Views  
-// ----------------------------- 
-function rx_home() { 
- buildMenu("receptionist"); 
- loadReception(); 
-} 
+// -----------------------------
+// Receptionist Views
+// -----------------------------
+function rx_home() {
+  if (typeof loadReception === "function") {
+    loadReception();
+    return;
+  }
+
+  setView(`
+    <h2>Receptionist Dashboard</h2>
+    <p>Reception dashboard coming soon.</p>
+  `);
+}
+
 function rx_registerPatient() {
- loadReception();
- rx_showPatientCreate(); 
-} 
+  if (typeof loadReception === "function") {
+    loadReception();
+  }
+
+  if (typeof rx_showPatientCreate === "function") {
+    rx_showPatientCreate();
+    return;
+  }
+
+  setView(`
+    <h2>Register Patient</h2>
+    <p>Patient registration page coming soon.</p>
+  `);
+}
+
 function rx_appointments() {
- loadReception();
- rx_showAppointmentBoard(); 
+  if (typeof loadReception === "function") {
+    loadReception();
+  }
+
+  if (typeof rx_showAppointmentBoard === "function") {
+    rx_showAppointmentBoard();
+    return;
+  }
+
+  setView(`
+    <h2>Appointments</h2>
+    <p>Reception appointments page coming soon.</p>
+  `);
 }
 
 // Start the app
