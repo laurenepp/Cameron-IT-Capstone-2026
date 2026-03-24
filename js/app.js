@@ -46,6 +46,21 @@ function normalizeRole(role) {
 }
 
 // -----------------------------
+// Sidebar user display
+// -----------------------------
+function setSidebarUser(user) {
+  const sidebarUser = document.getElementById("sidebarUser");
+  if (!sidebarUser) return;
+
+  if (!user || !user.name) {
+    sidebarUser.innerText = "";
+    return;
+  }
+
+  sidebarUser.innerText = `${user.name} (${user.role})`;
+}
+
+// -----------------------------
 // Boot: check session
 // -----------------------------
 async function start() {
@@ -58,6 +73,8 @@ async function start() {
     if (welcome) {
       welcome.innerText = `${user.name} (${user.role})`;
     }
+
+    setSidebarUser(user);
 
     const role = normalizeRole(user.role);
     renderDashboardShell(role);
@@ -77,6 +94,8 @@ function showLogin() {
 
   const welcome = document.getElementById("welcome");
   if (welcome) welcome.innerText = "";
+
+  setSidebarUser(null);
 
   document.getElementById("content").innerHTML = `
     <div class="login-screen">
@@ -358,31 +377,28 @@ function nurse_home() {
 
   setView(`
     <h2>Nurse Dashboard</h2>
-    <p>TODO: Patient queue + intake shortcuts.</p>
+    <p>TODO: Vitals + rooming workflow.</p>
   `);
 }
 
-function nurse_schedule() {
-  if (typeof loadNurse === "function") {
-    loadNurse();
-    return;
-  }
-
+function nurse_patients() {
   setView(`
-    <h2>Schedules</h2>
-    <p>TODO: Nurse schedule view.</p>
+    <h2>Assigned Patients</h2>
+    <p>TODO: Nurse patient list.</p>
   `);
 }
 
-function nurse_intake() {
-  if (typeof loadNurse === "function") {
-    loadNurse();
-    return;
-  }
-
+function nurse_vitals() {
   setView(`
-    <h2>Intake</h2>
-    <p>TODO: Initial visit documentation form.</p>
+    <h2>Vitals</h2>
+    <p>TODO: Record patient vitals.</p>
+  `);
+}
+
+function nurse_tasks() {
+  setView(`
+    <h2>Tasks</h2>
+    <p>TODO: Nurse task queue.</p>
   `);
 }
 
@@ -390,48 +406,39 @@ function nurse_intake() {
 // Receptionist Views
 // -----------------------------
 function rx_home() {
-  if (typeof loadReception === "function") {
-    loadReception();
+  if (typeof loadReceptionist === "function") {
+    loadReceptionist();
     return;
   }
 
   setView(`
     <h2>Receptionist Dashboard</h2>
-    <p>Reception dashboard coming soon.</p>
+    <p>TODO: Check-in, appointments, patient search.</p>
   `);
 }
 
-function rx_registerPatient() {
-  if (typeof loadReception === "function") {
-    loadReception();
-  }
-
-  if (typeof rx_showPatientCreate === "function") {
-    rx_showPatientCreate();
-    return;
-  }
-
+function rx_patients() {
   setView(`
-    <h2>Register Patient</h2>
-    <p>Patient registration page coming soon.</p>
+    <h2>Patients</h2>
+    <p>TODO: Search/create patients.</p>
   `);
 }
 
 function rx_appointments() {
-  if (typeof loadReception === "function") {
-    loadReception();
-  }
-
-  if (typeof rx_showAppointmentBoard === "function") {
-    rx_showAppointmentBoard();
-    return;
-  }
-
   setView(`
     <h2>Appointments</h2>
-    <p>Reception appointments page coming soon.</p>
+    <p>TODO: Schedule/reschedule appointments.</p>
   `);
 }
 
-// Start the app
+function rx_checkin() {
+  setView(`
+    <h2>Check-In</h2>
+    <p>TODO: Front desk check-in workflow.</p>
+  `);
+}
+
+// -----------------------------
+// Start app
+// -----------------------------
 start();
