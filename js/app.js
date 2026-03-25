@@ -333,7 +333,17 @@ function admin_settings() {
 // -----------------------------
 // Doctor Views
 // -----------------------------
+
+/* NOTE:
+   This keeps the doctor landing page using the full doctor dashboard
+   from js/roles/doctor.js
+*/
 function doc_home() {
+  if (typeof doc_showDashboard === "function") {
+    doc_showDashboard();
+    return;
+  }
+
   if (typeof loadDoctor === "function") {
     loadDoctor();
     return;
@@ -341,28 +351,55 @@ function doc_home() {
 
   setView(`
     <h2>Doctor Dashboard</h2>
-    <p>TODO: Today’s schedule + quick visit note entry.</p>
+    <p>Doctor dashboard is loading.</p>
   `);
 }
 
+/* NOTE:
+   This now sends the My Schedule tab to the doctor.js schedule page
+   instead of the old placeholder text
+*/
 function doc_schedule() {
+  if (typeof doc_showSchedule === "function") {
+    doc_showSchedule();
+    return;
+  }
+
   setView(`
     <h2>My Schedule</h2>
-    <p>TODO: Pull appointments for this provider.</p>
+    <p>Schedule page is loading.</p>
   `);
 }
 
+/* NOTE:
+   This now sends the Visit Notes tab to the doctor.js visit notes page
+   instead of the old placeholder text
+*/
 function doc_notes() {
+  if (typeof doc_showVisitNotes === "function") {
+    doc_showVisitNotes();
+    return;
+  }
+
   setView(`
     <h2>Visit Notes</h2>
-    <p>TODO: Create/view visit notes.</p>
+    <p>Visit notes page is loading.</p>
   `);
 }
 
+/* NOTE:
+   This now sends the Patients tab to the doctor.js patients page
+   instead of the old placeholder text
+*/
 function doc_patients() {
+  if (typeof doc_showPatients === "function") {
+    doc_showPatients();
+    return;
+  }
+
   setView(`
     <h2>Patients</h2>
-    <p>TODO: Doctor patient list view.</p>
+    <p>Patients page is loading.</p>
   `);
 }
 
