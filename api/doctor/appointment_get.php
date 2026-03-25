@@ -1,8 +1,8 @@
 <?php
 require_once "../utils.php";
-require_role("Doctor");
+$user = require_role("Doctor");
 
-$appointmentId = (int)($_GET["appointmentId"] ?? 0);
+$appointmentId = isset($_GET["appointmentId"]) ? (int)$_GET["appointmentId"] : 0;
 if ($appointmentId <= 0) {
   http_response_code(400);
   echo json_encode(["error" => "appointmentId required"]);
@@ -11,15 +11,25 @@ if ($appointmentId <= 0) {
 
 $stmt = $pdo->prepare("
   SELECT
-    a.Appointment_ID, a.Scheduled_Start, a.Scheduled_End, a.Status,
-    p.Patient_ID, p.First_Name AS Patient_First, p.Last_Name AS Patient_Last,
-    p.Date_Of_Birth, p.Phone_Number, p.Email
-  FROM Appointments a
-  JOIN Patients p ON a.Patient_ID = p.Patient_ID
+    a.Appointment_ID,
+    a.Patient_ID,
+    a.Provider_User_ID,
+    a.Scheduled_Start,
+    a.Scheduled_End,
+    a.Status,
+    p.First_Name AS Patient_First,
+    p.Last_Name AS Patient_Last,
+    p.Date_Of_Birth,
+    p.Gender,
+    p.Phone_Number,
+    p.Email
+  FROM Appointment a
+  JOIN Patient p ON a.Patient_ID = p.Patient_ID
   WHERE a.Appointment_ID = ?
+    AND a.Provider_User_ID = ?
   LIMIT 1
 ");
-$stmt->execute([$appointmentId]);
+$stmt->execute([$appointmentId, $user["id"]]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$row) {
@@ -28,4 +38,6 @@ if (!$row) {
   exit;
 }
 
-echo json_encode(["appointment" => $row]);
+echo json_encode([
+  "appointment" => $row
+]);
