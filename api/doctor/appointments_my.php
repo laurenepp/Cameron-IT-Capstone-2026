@@ -16,14 +16,22 @@ $toDT   = $to   . " 23:59:59";
 
 $stmt = $pdo->prepare("
   SELECT
-    a.Appointment_ID, a.Scheduled_Start, a.Scheduled_End, a.Status,
-    p.Patient_ID, p.First_Name AS Patient_First, p.Last_Name AS Patient_Last
-  FROM Appointments a
-  JOIN Patients p ON a.Patient_ID = p.Patient_ID
+    a.Appointment_ID,
+    a.Scheduled_Start,
+    a.Scheduled_End,
+    a.Status,
+    p.Patient_ID,
+    p.First_Name AS Patient_First,
+    p.Last_Name AS Patient_Last
+  FROM Appointment a
+  JOIN Patient p ON a.Patient_ID = p.Patient_ID
   WHERE a.Provider_User_ID = ?
     AND a.Scheduled_Start BETWEEN ? AND ?
   ORDER BY a.Scheduled_Start ASC
 ");
+
 $stmt->execute([$user["id"], $fromDT, $toDT]);
 
-echo json_encode(["appointments" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+echo json_encode([
+  "appointments" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+]);

@@ -9,7 +9,7 @@ $toDT   = $today . " 23:59:59";
 function countStatusForDoctor($pdo, $doctorId, $fromDT, $toDT, $status) {
   $stmt = $pdo->prepare("
     SELECT COUNT(*)
-    FROM Appointments
+    FROM Appointment
     WHERE Provider_User_ID = ?
       AND Scheduled_Start BETWEEN ? AND ?
       AND Status = ?
@@ -20,7 +20,7 @@ function countStatusForDoctor($pdo, $doctorId, $fromDT, $toDT, $status) {
 
 $stmt = $pdo->prepare("
   SELECT COUNT(*)
-  FROM Appointments
+  FROM Appointment
   WHERE Provider_User_ID = ?
     AND Scheduled_Start BETWEEN ? AND ?
 ");
@@ -43,8 +43,8 @@ $stmt = $pdo->prepare("
     a.Status,
     p.First_Name AS Patient_First,
     p.Last_Name  AS Patient_Last
-  FROM Appointments a
-  JOIN Patients p ON a.Patient_ID = p.Patient_ID
+  FROM Appointment a
+  JOIN Patient p ON a.Patient_ID = p.Patient_ID
   WHERE a.Provider_User_ID = ?
     AND a.Scheduled_Start BETWEEN ? AND ?
     AND a.Scheduled_Start >= ?
