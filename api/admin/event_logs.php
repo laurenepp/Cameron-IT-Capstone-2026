@@ -3,7 +3,8 @@ require_once __DIR__ . '/../../includes/db.php';
 
 header('Content-Type: application/json');
 
-function mapSeverity(string $actionType): string {
+function mapSeverity(string $actionType): string
+{
     $action = strtoupper(trim($actionType));
 
     $critical = [
@@ -33,21 +34,69 @@ function mapSeverity(string $actionType): string {
     return 'Info';
 }
 
-try {
+function tableExists(PDO $pdo, string $tableName): bool
+{
     $sql = "
-        SELECT
-            a.Audit_Log_ID,
-            a.Audit_Date,
-            a.Action_Type,
-            a.Details,
-            u.First_Name,
-            u.Last_Name
-        FROM Audit_Log a
-        LEFT JOIN Users u
-            ON a.User_ID = u.User_ID
-        ORDER BY a.Audit_Date DESC
-        LIMIT 200
+        SELECT COUNT(*) 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE()
+          AND table_name = ?
     ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$tableName]);
+
+    return (int)$stmt->fetchColumn() > 0;
+}
+
+try {
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        echo json_encode([]);
+        exit;
+    }
+
+    if (!tableExists($pdo, 'Audit_Log')) {
+        echo json_encode([]);
+        exit;
+    }
+
+    $userTable = null;
+
+    if (tableExists($pdo, 'Users')) {
+        $userTable = 'Users';
+    } elseif (tableExists($pdo, 'User')) {
+        $userTable = 'User';
+    }
+
+    if ($userTable) {
+        $sql = "
+            SELECT
+                a.Audit_Log_ID,
+                a.Audit_Date,
+                a.Action_Type,
+                a.Details,
+                u.First_Name,
+                u.Last_Name
+            FROM Audit_Log a
+            LEFT JOIN {$userTable} u
+                ON a.User_ID = u.User_ID
+            ORDER BY a.Audit_Date DESC
+            LIMIT 200
+        ";
+    } else {
+        $sql = "
+            SELECT
+                a.Audit_Log_ID,
+                a.Audit_Date,
+                a.Action_Type,
+                a.Details,
+                '' AS First_Name,
+                '' AS Last_Name
+            FROM Audit_Log a
+            ORDER BY a.Audit_Date DESC
+            LIMIT 200
+        ";
+    }
 
     $stmt = $pdo->query($sql);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -73,8 +122,5 @@ try {
 
     echo json_encode($logs);
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Failed to load event logs'
-    ]);
+    echo json_encode([]);
 }
