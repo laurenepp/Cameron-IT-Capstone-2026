@@ -1,12 +1,16 @@
 <?php
 require_once "../utils.php";
+
+/* NOTE:
+   Keep doctor-only access.
+*/
 $user = require_role("Doctor");
 
 $appointmentId = isset($_GET["appointmentId"]) ? (int)$_GET["appointmentId"] : 0;
 if ($appointmentId <= 0) {
-  http_response_code(400);
-  echo json_encode(["error" => "appointmentId required"]);
-  exit;
+    http_response_code(400);
+    echo json_encode(["error" => "appointmentId required"]);
+    exit;
 }
 
 // Check if visit already exists
@@ -34,12 +38,13 @@ $stmt = $pdo->prepare("
   LIMIT 1
 ");
 $stmt->execute([$appointmentId]);
-$appt = $stmt->fetch(PDO::FETCH_ASSOC);
+$existingVisit = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$appt) {
-  http_response_code(404);
-  echo json_encode(["error" => "Appointment not found"]);
-  exit;
+if ($existingVisit) {
+    echo json_encode([
+        "visitId" => (int)$existingVisit["Visit_ID"]
+    ]);
+    exit;
 }
 
 // Create visit

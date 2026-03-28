@@ -9,6 +9,10 @@ if ($appointmentId <= 0) {
   exit;
 }
 
+/* NOTE:
+   Keep the main version layout, but preserve the richer patient fields
+   already present there so the appointment drawer can show more detail.
+*/
 $stmt = $pdo->prepare("
   SELECT
     a.Appointment_ID,
@@ -32,12 +36,18 @@ $stmt = $pdo->prepare("
 $stmt->execute([$appointmentId, $user["id"]]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+/* NOTE:
+   Only allow the logged-in doctor to open appointments assigned to them.
+*/
 if (!$row) {
   http_response_code(404);
   echo json_encode(["error" => "Appointment not found"]);
   exit;
 }
-
+ /* NOTE:
+   doctor.js expects JSON in this exact shape:
+   { appointment: {...} }
+*/
 echo json_encode([
   "appointment" => $row
 ]);
