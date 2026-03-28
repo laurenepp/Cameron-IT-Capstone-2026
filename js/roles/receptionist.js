@@ -302,18 +302,6 @@ async function rx_createPatient() {
   }
 }
 
-function rx_showAppointmentBoard() {
-  rx_panel(`
-    <div class="section-title">
-      <h3>Appointments Board</h3>
-      <div class="tools">
-        <button class="ghost" onclick="rx_panel('')">Close</button>
-      </div>
-    </div>
-    <p>Appointments board is not wired yet.</p>
-  `);
-}
-
 function receptionistAppointments() {
   loadAppointmentsPage({
     role: "receptionist",
