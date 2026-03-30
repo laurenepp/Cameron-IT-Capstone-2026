@@ -4,7 +4,6 @@ USE riversideclinicdb;
 
 SET NAMES utf8mb4;
 
-
 -- =========================
 -- Core Access Control
 -- =========================
@@ -114,6 +113,18 @@ CREATE TABLE `Insurance_Info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================
+-- Rooms
+-- =========================
+
+CREATE TABLE `Room` (
+  `Room_ID` BIGINT NOT NULL AUTO_INCREMENT,
+  `Room_Number` VARCHAR(20) NOT NULL,
+  `Room_Status` VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+  PRIMARY KEY (`Room_ID`),
+  UNIQUE KEY `uk_Room_Room_Number` (`Room_Number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
 -- Scheduling
 -- =========================
 
@@ -156,7 +167,7 @@ CREATE TABLE `Appointment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================
--- Visits + Notes
+-- Visits + Notes + Workflow
 -- =========================
 
 CREATE TABLE `Visit` (
@@ -165,12 +176,15 @@ CREATE TABLE `Visit` (
   `Appointment_ID` BIGINT NULL,
   `Patient_ID` BIGINT NOT NULL,
   `Provider_User_ID` BIGINT NOT NULL,
-  `Visit_DateTime` DATETIME NOT NULL,
+  `Room_ID` BIGINT NULL,
+  `Visit_Date_Time` DATETIME NOT NULL,
+  `Doctor_Case_Status` VARCHAR(20) NULL,
   PRIMARY KEY (`Visit_ID`),
   KEY `idx_Visit_Created_By_User_ID` (`Created_By_User_ID`),
   KEY `idx_Visit_Appointment_ID` (`Appointment_ID`),
   KEY `idx_Visit_Patient_ID` (`Patient_ID`),
   KEY `idx_Visit_Provider_User_ID` (`Provider_User_ID`),
+  KEY `idx_Visit_Room_ID` (`Room_ID`),
   CONSTRAINT `fk_Visit_Created_By_User`
     FOREIGN KEY (`Created_By_User_ID`) REFERENCES `Users` (`User_ID`)
     ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -182,7 +196,10 @@ CREATE TABLE `Visit` (
     ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT `fk_Visit_Provider`
     FOREIGN KEY (`Provider_User_ID`) REFERENCES `Users` (`User_ID`)
-    ON UPDATE CASCADE ON DELETE RESTRICT
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT `fk_Visit_Room`
+    FOREIGN KEY (`Room_ID`) REFERENCES `Room` (`Room_ID`)
+    ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `Visit_Notes` (
@@ -190,7 +207,7 @@ CREATE TABLE `Visit_Notes` (
   `Visit_ID` BIGINT NOT NULL,
   `Created_By_User_ID` BIGINT NOT NULL,
   `Visit_Note` TEXT NOT NULL,
-  `Note_DateTime` DATETIME NOT NULL,
+  `Note_Date_Time` DATETIME NOT NULL,
   PRIMARY KEY (`Note_ID`),
   KEY `idx_Visit_Notes_Visit_ID` (`Visit_ID`),
   KEY `idx_Visit_Notes_Created_By_User_ID` (`Created_By_User_ID`),
@@ -200,6 +217,68 @@ CREATE TABLE `Visit_Notes` (
   CONSTRAINT `fk_Visit_Notes_Created_By_User`
     FOREIGN KEY (`Created_By_User_ID`) REFERENCES `Users` (`User_ID`)
     ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `Visit_Exam` (
+  `Visit_ID` BIGINT NOT NULL,
+  `Nurse_Intake_Note` TEXT NULL,
+  `Doctor_Exam_Note` TEXT NULL,
+  `Blood_Pressure` VARCHAR(30) NULL,
+  `Pulse` VARCHAR(20) NULL,
+  `Respiration` VARCHAR(20) NULL,
+  `Temperature` VARCHAR(20) NULL,
+  `Oxygen_Saturation` VARCHAR(20) NULL,
+  `Height` VARCHAR(20) NULL,
+  `Weight` VARCHAR(20) NULL,
+  `Pain_Level` VARCHAR(20) NULL,
+  `Updated_By_User_ID` BIGINT NULL,
+  `Updated_At` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Visit_ID`),
+  KEY `idx_Visit_Exam_Updated_By_User_ID` (`Updated_By_User_ID`),
+  CONSTRAINT `fk_Visit_Exam_Visit`
+    FOREIGN KEY (`Visit_ID`) REFERENCES `Visit` (`Visit_ID`)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_Visit_Exam_Updated_By_User`
+    FOREIGN KEY (`Updated_By_User_ID`) REFERENCES `Users` (`User_ID`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `Visit_Medication` (
+  `Visit_ID` BIGINT NOT NULL,
+  `Current_Medications` TEXT NULL,
+  `Medication_Changes` TEXT NULL,
+  `Medication_Notes` TEXT NULL,
+  `Updated_By_User_ID` BIGINT NULL,
+  `Updated_At` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Visit_ID`),
+  KEY `idx_Visit_Medication_Updated_By_User_ID` (`Updated_By_User_ID`),
+  CONSTRAINT `fk_Visit_Medication_Visit`
+    FOREIGN KEY (`Visit_ID`) REFERENCES `Visit` (`Visit_ID`)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_Visit_Medication_Updated_By_User`
+    FOREIGN KEY (`Updated_By_User_ID`) REFERENCES `Users` (`User_ID`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
+-- Billing
+-- =========================
+
+CREATE TABLE `Billing` (
+  `Billing_ID` BIGINT NOT NULL AUTO_INCREMENT,
+  `Visit_ID` BIGINT NOT NULL,
+  `Amount` DECIMAL(10,2) NOT NULL,
+  `Status` VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
+  `Created_At` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Updated_At` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Billing_ID`),
+  UNIQUE KEY `uk_Billing_Visit_ID` (`Visit_ID`),
+  CONSTRAINT `fk_Billing_Visit`
+    FOREIGN KEY (`Visit_ID`) REFERENCES `Visit` (`Visit_ID`)
+    ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================
@@ -235,4 +314,3 @@ CREATE TABLE `Audit_Log` (
     FOREIGN KEY (`User_ID`) REFERENCES `Users` (`User_ID`)
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
